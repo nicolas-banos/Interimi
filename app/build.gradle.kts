@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.interimi.interimi"
-    compileSdk = 34
+    compileSdk = 35 // Actualiza a la API requerida por las dependencias
 
     defaultConfig {
         applicationId = "com.interimi.interimi"
-        minSdk = 26
-        targetSdk = 34
+        minSdk = 26 // Mantén este valor según los dispositivos que deseas soportar
+        targetSdk = 35 // Actualiza a la API requerida
         versionCode = 1
         versionName = "1.0"
 
@@ -38,6 +38,7 @@ android {
         compose = true
     }
 }
+
 
 dependencies {
 
