@@ -1,6 +1,7 @@
 package com.interimi.interimi
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -16,9 +17,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import androidx.room.*
 import com.interimi.interimi.ui.theme.InterimiTheme
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 
 class MainActivity : ComponentActivity() {
+    private val TAG = "LifecycleEvent"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -26,6 +35,66 @@ class MainActivity : ComponentActivity() {
                 InterimiApp()
             }
         }
+        Log.d(TAG, "onCreate")
+
+        //Room
+        val db = AppDatabase.getInstance(this)
+        lifecycleScope.launch {
+            val userDao = db.userDao()
+
+            //Insertar usuarior
+            withContext(Dispatchers.IO) {
+                val userId = userDao.insertUser(User(name = "Marcus Aurelius", email = "marcus@stoic.com"))
+                Log.d(TAG, "User inserted with ID: $userId")
+            }
+
+            //Obtener usuarios
+            withContext(Dispatchers.IO) {
+                val users = userDao.getAllUsers()
+                users.forEach {
+                    Log.d(TAG, "User: ${it.name}, Email: ${it.email}")
+                }
+            }
+        }
+
+
+    }
+
+
+    //Métodos tarea2
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d(TAG, "onRestart")
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        Log.d(TAG, "onTrimMemory - Memory level: $level")
     }
 }
 
@@ -44,7 +113,7 @@ fun InterimiApp() {
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // Texto que describe una funcionalidad
+                //Texto que describe una funcionalidad
                 Text(
                     text = "Tu asistente personal basado en estoicismo.",
                     style = MaterialTheme.typography.bodyLarge,
@@ -62,7 +131,6 @@ fun InterimiApp() {
                         .height(150.dp)
                         .padding(16.dp)
                 )
-
 
                 //Lista de datos simulados
                 LazyColumn(
@@ -101,3 +169,4 @@ fun InterimiAppPreview() {
         InterimiApp()
     }
 }
+
