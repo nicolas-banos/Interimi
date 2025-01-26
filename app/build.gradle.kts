@@ -2,16 +2,16 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt") // Añade este plugin
+    id("kotlin-kapt")
 }
 
 android {
     namespace = "com.interimi.interimi"
-    compileSdk = 35 // Versión de SDK objetivo
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.interimi.interimi"
-        minSdk = 26 // Versión mínima de SDK soportada
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -61,6 +61,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.compose.foundation:foundation:1.5.0")
+
 }
 
 kapt {

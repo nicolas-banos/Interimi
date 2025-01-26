@@ -11,3 +11,7 @@ estado actual y principios éticos, corrigiendo hábitos perjudiciales y ofrecie
 - Corrección ética: Identifica hábitos perjudiciales y sugiere mejoras basadas en principios éticos o personales.
 - Gestión emocional: Ofrece apoyo en momentos de estrés o tristeza, ayudando al usuario a mantener la calma y encontrar claridad.
 - Seguimiento de progreso: Analiza el avance del usuario hacia sus metas y sugiere ajustes para optimizar resultados.
+
+
+## Cambios tarea 3
+Se han creado dos tabs para poder mostrar ambos apartados de la tarea. Uno utilizando Room y otro utilizando SQLLite.

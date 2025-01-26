@@ -1,172 +1,273 @@
 package com.interimi.interimi
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
-import androidx.room.*
 import com.interimi.interimi.ui.theme.InterimiTheme
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
-
+// Clase principal de la actividad.
 class MainActivity : ComponentActivity() {
-    private val TAG = "LifecycleEvent"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             InterimiTheme {
-                InterimiApp()
+                TabView() // Configura las pestañas.
             }
         }
-        Log.d(TAG, "onCreate")
-
-        //Room
-        val db = AppDatabase.getInstance(this)
-        lifecycleScope.launch {
-            val userDao = db.userDao()
-
-            //Insertar usuarior
-            withContext(Dispatchers.IO) {
-                val userId = userDao.insertUser(User(name = "Marcus Aurelius", email = "marcus@stoic.com"))
-                Log.d(TAG, "User inserted with ID: $userId")
-            }
-
-            //Obtener usuarios
-            withContext(Dispatchers.IO) {
-                val users = userDao.getAllUsers()
-                users.forEach {
-                    Log.d(TAG, "User: ${it.name}, Email: ${it.email}")
-                }
-            }
-        }
-
-
-    }
-
-
-    //Métodos tarea2
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause")
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "onStop")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy")
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        Log.d(TAG, "onRestart")
-    }
-
-    override fun onTrimMemory(level: Int) {
-        super.onTrimMemory(level)
-        Log.d(TAG, "onTrimMemory - Memory level: $level")
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InterimiApp() {
+fun TabView() {
+    var selectedTab by remember { mutableStateOf(0) } // Pestaña seleccionada.
+    val tabs = listOf("SQLite", "Room") // Lista de nombres de pestañas.
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Interimi", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Persistencia de Datos") }) },
         content = { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                //Texto que describe una funcionalidad
-                Text(
-                    text = "Tu asistente personal basado en estoicismo.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-
-                Image(
-                    painter = painterResource(id = R.drawable.estoicismo),
-                    contentDescription = "Imagen decorativa",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .padding(16.dp)
-                )
-
-                //Lista de datos simulados
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    val sampleData = listOf(
-                        "Reflexión 1: Controla lo que puedes",
-                        "Motivación 2: Actúa con propósito",
-                        "Consejo 3: Haz tu mejor esfuerzo cada día"
-                    )
-                    items(sampleData) { item ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = item,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
+            Column(modifier = Modifier.padding(padding)) {
+                TabRow(selectedTabIndex = selectedTab) { // Control de las pestañas.
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = { Text(title) }
+                        )
                     }
+                }
+                when (selectedTab) { // Muestra la pantalla correspondiente según la pestaña seleccionada.
+                    0 -> SQLiteScreen()
+                    1 -> RoomScreen()
                 }
             }
         }
     )
 }
 
-@Preview(showBackground = true)
+// Pantalla para manejo de SQLite.
 @Composable
-fun InterimiAppPreview() {
-    InterimiTheme {
-        InterimiApp()
+fun SQLiteScreen() {
+    val context = LocalContext.current
+    val sqliteHelper = remember { MySQLiteHelper(context) } // Helper de SQLite.
+    var name by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var goals by remember { mutableStateOf("") }
+    var history by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf("") } // ID del usuario para buscar o editar.
+    var users by remember { mutableStateOf(listOf<Map<String, Any>>()) } // Lista de usuarios.
+    var singleUser by remember { mutableStateOf<Map<String, Any>?>(null) } // Usuario específico.
+    val coroutineScope = rememberCoroutineScope()
+
+    // Valida si el ID proporcionado es válido.
+    val isIdValid = userId.toIntOrNull() != null
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()), // Habilita el scroll vertical.
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Formulario para entrada de datos.
+        TextField(value = userId, onValueChange = { userId = it }, label = { Text("ID Usuario") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = name, onValueChange = { name = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = age, onValueChange = { age = it }, label = { Text("Edad") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = goals, onValueChange = { goals = it }, label = { Text("Metas") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = history, onValueChange = { history = it }, label = { Text("Historial") }, modifier = Modifier.fillMaxWidth())
+
+        // Botón para insertar un nuevo usuario.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        sqliteHelper.insertUser(name, age.toIntOrNull(), goals, history)
+                        users = sqliteHelper.getAllUsers()
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Insertar")
+            }
+        }
+
+        // Botones para editar, borrar y buscar usuarios.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        userId.toIntOrNull()?.let {
+                            sqliteHelper.updateUser(it, name, age.toIntOrNull(), goals, history)
+                            users = sqliteHelper.getAllUsers()
+                        }
+                    }
+                },
+                enabled = isIdValid,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Editar")
+            }
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        userId.toIntOrNull()?.let {
+                            sqliteHelper.deleteUserById(it)
+                            users = sqliteHelper.getAllUsers()
+                        }
+                    }
+                },
+                enabled = isIdValid,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Borrar")
+            }
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        userId.toIntOrNull()?.let {
+                            singleUser = sqliteHelper.getUserById(it)
+                        }
+                    }
+                },
+                enabled = isIdValid,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Buscar")
+            }
+        }
+
+        // Muestra todos los usuarios.
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Usuarios:", style = MaterialTheme.typography.titleMedium)
+        users.forEach { user ->
+            Text("- ID: ${user["id"]}, Nombre: ${user["name"]}, Metas: ${user["goals"]}, Historial: ${user["history"]}")
+        }
+
+        // Muestra un único usuario si fue encontrado.
+        singleUser?.let { user ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Usuario Encontrado:", style = MaterialTheme.typography.titleMedium)
+            Text("- ID: ${user["id"]}, Nombre: ${user["name"]}, Metas: ${user["goals"]}, Historial: ${user["history"]}")
+        }
     }
 }
 
+// Pantalla para manejo de Room.
+@Composable
+fun RoomScreen() {
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getInstance(context) } // Instancia de Room.
+    val userDao = db.userDao()
+    var name by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var goals by remember { mutableStateOf("") }
+    var history by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf("") } // ID del usuario para buscar o editar.
+    var users by remember { mutableStateOf(listOf<User>()) } // Lista de usuarios.
+    var singleUser by remember { mutableStateOf<User?>(null) } // Usuario específico.
+    val coroutineScope = rememberCoroutineScope()
+
+    // Valida si el ID proporcionado es válido.
+    val isIdValid = userId.toIntOrNull() != null
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()), // Habilita el scroll vertical.
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Formulario para entrada de datos.
+        TextField(value = userId, onValueChange = { userId = it }, label = { Text("ID Usuario") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = name, onValueChange = { name = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = age, onValueChange = { age = it }, label = { Text("Edad") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = goals, onValueChange = { goals = it }, label = { Text("Metas") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = history, onValueChange = { history = it }, label = { Text("Historial") }, modifier = Modifier.fillMaxWidth())
+
+        // Botón para insertar un nuevo usuario.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val user = User(name = name, age = age.toIntOrNull(), goals = goals, history = history)
+                        userDao.insertUser(user)
+                        users = userDao.getAllUsers()
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Insertar")
+            }
+        }
+
+        // Botones para editar, borrar y buscar usuarios.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        userId.toIntOrNull()?.let {
+                            val updatedUser = User(id = it, name = name, age = age.toIntOrNull(), goals = goals, history = history)
+                            userDao.updateUser(updatedUser)
+                            users = userDao.getAllUsers()
+                        }
+                    }
+                },
+                enabled = isIdValid,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Editar")
+            }
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        userId.toIntOrNull()?.let {
+                            userDao.deleteUserById(it)
+                            users = userDao.getAllUsers()
+                        }
+                    }
+                },
+                enabled = isIdValid,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Borrar")
+            }
+            Button(
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        userId.toIntOrNull()?.let {
+                            singleUser = userDao.getUserById(it)
+                        }
+                    }
+                },
+                enabled = isIdValid,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Buscar")
+            }
+        }
+
+        // Muestra todos los usuarios.
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Usuarios:", style = MaterialTheme.typography.titleMedium)
+        users.forEach { user ->
+            Text("- ID: ${user.id}, Nombre: ${user.name}, Metas: ${user.goals}, Historial: ${user.history}")
+        }
+
+        // Muestra un único usuario si fue encontrado.
+        singleUser?.let { user ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Usuario Encontrado:", style = MaterialTheme.typography.titleMedium)
+            Text("- ID: ${user.id}, Nombre: ${user.name}, Metas: ${user.goals}, Historial: ${user.history}")
+        }
+    }
+}
