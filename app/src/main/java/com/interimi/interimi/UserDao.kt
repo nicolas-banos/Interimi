@@ -2,32 +2,31 @@ package com.interimi.interimi
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 
-// Interfaz DAO para interactuar con la base de datos Room.
 @Dao
 interface UserDao {
 
-    // Inserta un usuario en la tabla y devuelve el ID generado.
-    @Insert
-    fun insertUser(user: User): Long
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUser(user: User): Long
 
-    // Obtiene todos los usuarios de la tabla "users".
-    @Query("SELECT * FROM users")
-    fun getAllUsers(): List<User>
-
-    // Busca un usuario por su ID. Si no existe, devuelve null.
     @Query("SELECT * FROM users WHERE id = :userId")
-    fun getUserById(userId: Int): User?
+    suspend fun getUserById(userId: Int): User?
 
-    // Actualiza un usuario existente en la tabla.
-    @Update
-    fun updateUser(user: User)
+    @Query("UPDATE users SET name = :newName WHERE id = :userId")
+    suspend fun updateUserName(userId: Int, newName: String)
 
-    // Borra un usuario específico por su ID.
+    @Query("UPDATE users SET age = :newAge WHERE id = :userId")
+    suspend fun updateUserAge(userId: Int, newAge: Int)
+
+    @Query("UPDATE users SET history = :history WHERE id = :userId")
+    suspend fun updateUserHistory(userId: Int, history: String)
+
+    @Query("UPDATE users SET goals = :goals WHERE id = :userId")
+    suspend fun updateUserGoals(userId: Int, goals: String)
+
     @Query("DELETE FROM users WHERE id = :userId")
-    fun deleteUserById(userId: Int)
+    suspend fun deleteUserById(userId: Int)
+
 }
-
-

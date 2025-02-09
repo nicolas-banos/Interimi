@@ -2,38 +2,39 @@ package com.interimi.interimi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.interimi.interimi.network.OpenAIRequest
-import com.interimi.interimi.network.OpenAIResponse
-import com.interimi.interimi.network.RetrofitInstance
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import javax.inject.Inject
 
-class UserViewModel : ViewModel() {
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    private val userDao: UserDao
+) : ViewModel() {
 
-    private val _openAIResponse = MutableStateFlow<String>("")
-    val openAIResponse: StateFlow<String> = _openAIResponse
+    private val _userState = MutableStateFlow<User?>(null)
+    val userState: StateFlow<User?> = _userState
 
-    fun askOpenAI(question: String) {
-        val request = OpenAIRequest(
-            messages = listOf(mapOf("role" to "user", "content" to question))
-        )
+    fun getUserById(userId: Int) {
+        viewModelScope.launch {
+            _userState.value = userDao.getUserById(userId)
+        }
+    }
 
-        RetrofitInstance.api.getChatCompletion(request).enqueue(object : Callback<OpenAIResponse> {
-            override fun onResponse(call: Call<OpenAIResponse>, response: Response<OpenAIResponse>) {
-                if (response.isSuccessful) {
-                    _openAIResponse.value = response.body()?.choices?.firstOrNull()?.message?.content ?: "Sin respuesta"
-                } else {
-                    _openAIResponse.value = "Error: ${response.errorBody()?.string()}"
-                }
-            }
+    fun insertUser(user: User, onComplete: (Long) -> Unit) {
+        viewModelScope.launch {
+            val id = userDao.insertUser(user)
+            onComplete(id)
+        }
+    }
 
-            override fun onFailure(call: Call<OpenAIResponse>, t: Throwable) {
-                _openAIResponse.value = "Fallo en la conexión: ${t.message}"
-            }
-        })
+    fun updateUserGoals(userId: Int, newGoal: String) {
+        viewModelScope.launch {
+            val user = userDao.getUserById(userId)
+            val updatedGoals = (user?.goals ?: "").plus("\n- $newGoal") // Agrega nueva meta con formato "- "
+            userDao.updateUserGoals(userId, updatedGoals.trim()) // Guardar metas actualizadas
+            getUserById(userId) // Recargar usuario
+        }
     }
 }
