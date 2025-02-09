@@ -6,12 +6,10 @@ estado actual y principios éticos, corrigiendo hábitos perjudiciales y ofrecie
 
 ## Funcionalidades
 - Asistencia para alcanzar metas: Proporciona estrategias y motivación personalizadas para que el usuario logre sus objetivos.
-- Gestión del tiempo: Ayuda a organizar el tiempo de forma eficiente, sugiriendo rutinas y priorizando tareas.
-- Reflexiones diarias: Proporciona pensamientos inspirados en estoicismo, filosofía o valores del usuario para motivar y mantener el enfoque.
-- Corrección ética: Identifica hábitos perjudiciales y sugiere mejoras basadas en principios éticos o personales.
-- Gestión emocional: Ofrece apoyo en momentos de estrés o tristeza, ayudando al usuario a mantener la calma y encontrar claridad.
-- Seguimiento de progreso: Analiza el avance del usuario hacia sus metas y sugiere ajustes para optimizar resultados.
+- Solución de problemas: Resuelve problemas del día a día de manera estoica.
 
 
-## Cambios tarea 3
-Se han creado dos tabs para poder mostrar ambos apartados de la tarea. Uno utilizando Room y otro utilizando SQLLite.
+## Cambios tarea 4
+Se han creado dos tabs, uno para las consultas ("Consejos estoicos") con OpenAI y otro para la creación del usuario y la configuración de sus metas. Mediante un prompt personalizado y utilizando la consulta, las metas y el historial de consultas,
+se le pide a OpenAIApi que nos responda un consejo estoico para afrontar el problema o pregunta de la consulta. Esto todo lo hace basandose en las mencionadas metas y historial de consultas para tener una base. Falta aun bastante por mejorar en ese
+prompt, pero ya es suficiente para ver el proósito real de la aplicación.
