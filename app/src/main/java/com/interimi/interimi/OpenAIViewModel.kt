@@ -2,6 +2,8 @@ package com.interimi.interimi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.interimi.interimi.data.OpenAIRepository
+import com.interimi.interimi.domain.usecases.UseCases
 import com.interimi.interimi.network.OpenAIRequest
 import com.interimi.interimi.network.OpenAIResponse
 import com.interimi.interimi.network.RetrofitInstance
@@ -14,41 +16,20 @@ import retrofit2.Callback
 import retrofit2.Response
 import javax.inject.Inject
 
+
 @HiltViewModel
 class OpenAIViewModel @Inject constructor(
-    private val userDao: UserDao
+    private val useCases: UseCases
 ) : ViewModel() {
 
-    private val _openAIResponse = MutableStateFlow<String>("")
+    private val _openAIResponse = MutableStateFlow("Esperando respuesta...")
     val openAIResponse: StateFlow<String> = _openAIResponse
 
-    fun askOpenAI(question: String, userId: Int) {
+    fun askAI(question: String, userId: Int) {
         viewModelScope.launch {
-            val user = userDao.getUserById(userId)
-            val goals = user?.goals.orEmpty() // Obtiene metas del usuario
-            val history = user?.history.orEmpty() // Obtiene historial actual
-            val updatedHistory = history + "\n- $question" // Agrega la nueva consulta al historial
-
-            // Actualiza el historial en la base de datos
-            userDao.updateUserHistory(userId, updatedHistory)
-
-            val formattedQuestion = "Responde de manera estoica a la siguiente consulta/problema: $question. Basándote en estas metas que tiene el usuario: $goals. Debes orientarlo a solucionar o responder su consulta, Sin dejar de lado sus metas conocidas. Estas son algunas consultas que este usuario te ha hecho en el pasado: ${history} Mencionalas únicamente si es necesario, pero utilizalas para guiarte."
-
-            RetrofitInstance.api.getChatCompletion(OpenAIRequest(
-                messages = listOf(mapOf("role" to "user", "content" to formattedQuestion))
-            )).enqueue(object : Callback<OpenAIResponse> {
-                override fun onResponse(call: Call<OpenAIResponse>, response: Response<OpenAIResponse>) {
-                    if (response.isSuccessful) {
-                        _openAIResponse.value = response.body()?.choices?.firstOrNull()?.message?.content ?: "Sin respuesta"
-                    } else {
-                        _openAIResponse.value = "Error: ${response.errorBody()?.string()}"
-                    }
-                }
-
-                override fun onFailure(call: Call<OpenAIResponse>, t: Throwable) {
-                    _openAIResponse.value = "Fallo en la conexión: ${t.message}"
-                }
-            })
+            _openAIResponse.value = "Cargando..."
+            _openAIResponse.value = useCases.askOpenAI(question, userId)
         }
     }
 }
+

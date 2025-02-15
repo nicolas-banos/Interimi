@@ -2,6 +2,8 @@ package com.interimi.interimi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.interimi.interimi.data.UserRepository
+import com.interimi.interimi.domain.usecases.UseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val userDao: UserDao
+    private val useCases: UseCases
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow<User?>(null)
@@ -18,23 +20,26 @@ class UserViewModel @Inject constructor(
 
     fun getUserById(userId: Int) {
         viewModelScope.launch {
-            _userState.value = userDao.getUserById(userId)
+            _userState.value = useCases.getUserById(userId)
         }
     }
 
     fun insertUser(user: User, onComplete: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = userDao.insertUser(user)
+            val id = useCases.insertUser(user)
             onComplete(id)
+            getUserById(user.id) // Recargar datos después de insertar
         }
     }
 
     fun updateUserGoals(userId: Int, newGoal: String) {
         viewModelScope.launch {
-            val user = userDao.getUserById(userId)
-            val updatedGoals = (user?.goals ?: "").plus("\n- $newGoal") // Agrega nueva meta con formato "- "
-            userDao.updateUserGoals(userId, updatedGoals.trim()) // Guardar metas actualizadas
-            getUserById(userId) // Recargar usuario
+            useCases.updateUserGoals(userId, newGoal)
+            getUserById(userId) // Recargar usuario actualizado
         }
     }
 }
+
+
+
+

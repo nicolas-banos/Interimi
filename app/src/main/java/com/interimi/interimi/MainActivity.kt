@@ -12,14 +12,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.interimi.interimi.data.OpenAIRepository
 import com.interimi.interimi.ui.theme.InterimiTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
@@ -58,20 +61,16 @@ fun MainScreen() {
     }
 }
 
-// CONSEJOS
 @Composable
 fun OpenAIScreen(viewModel: OpenAIViewModel = hiltViewModel()) {
     val response by viewModel.openAIResponse.collectAsState()
     var userInput by remember { mutableStateOf("") }
-
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-
         OutlinedTextField(
             value = userInput,
             onValueChange = { userInput = it },
@@ -83,12 +82,14 @@ fun OpenAIScreen(viewModel: OpenAIViewModel = hiltViewModel()) {
 
         Button(
             onClick = {
-                viewModel.askOpenAI(userInput,1)
-                userInput = "" // Limpiar el input después de enviar
+                if (userInput.isNotBlank()) {
+                    viewModel.askAI(userInput, 1)
+                    userInput = "" // Limpiar input después de enviar
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Pedir consejo")
+            Text("Preguntar")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -99,10 +100,15 @@ fun OpenAIScreen(viewModel: OpenAIViewModel = hiltViewModel()) {
                 .verticalScroll(rememberScrollState())
         ) {
             Text(text = "Consejo:", style = MaterialTheme.typography.titleMedium)
-            Text(text = response, modifier = Modifier.padding(8.dp))
+            Text(
+                text = response,
+                modifier = Modifier.padding(8.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
+
 
 
 
@@ -191,17 +197,20 @@ fun CreateUserForm(onUserCreated: (User) -> Unit) {
 }
 
 @Composable
-fun EditGoalsScreen(user: User, viewModel: UserViewModel) {
+fun EditGoalsScreen(user: User, viewModel: UserViewModel, preferencesViewModel: UserPreferencesViewModel = hiltViewModel()) {
     var newGoal by remember { mutableStateOf("") }
-    var goalsList by remember(user.goals) {
-        mutableStateOf(user.goals?.split("\n- ")?.filter { it.isNotBlank() }?.distinct() ?: emptyList())
+    val history by preferencesViewModel.userHistory.collectAsState()
+
+    LaunchedEffect(Unit) {
+        preferencesViewModel.loadHistory()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        // Mostrar historial de preguntas
+        Text(text = "Historial de Preguntas:", fontWeight = FontWeight.Bold)
+        Text(text = if (history.isEmpty()) "No hay historial" else history)
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Input para agregar nuevas metas
         OutlinedTextField(
@@ -215,54 +224,19 @@ fun EditGoalsScreen(user: User, viewModel: UserViewModel) {
 
         Button(
             onClick = {
-                if (newGoal.isNotBlank() && newGoal !in goalsList) {
-                    val updatedGoals = (goalsList + newGoal).joinToString("\n- ")
-                    viewModel.updateUserGoals(user.id, updatedGoals)
-
-                    // Actualizar lista de metas.
-                    goalsList = updatedGoals.split("\n- ").filter { it.isNotBlank() }.distinct()
-
-                    newGoal = "" // Limpiar input después de añadir la meta
+                if (newGoal.isNotBlank()) {
+                    viewModel.updateUserGoals(user.id, newGoal)
+                    preferencesViewModel.saveHistory("Nueva meta: $newGoal")
+                    newGoal = "" // Limpiar input
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Añadir Meta")
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Metas actuales:", fontWeight = FontWeight.Bold)
-
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(goalsList) { meta ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = "- $meta", modifier = Modifier.weight(1f))
-
-                    IconButton(onClick = {
-                        // Filtrar la meta seleccionada de la lista
-                        val updatedGoalsList = goalsList.filter { it != meta }
-                        val updatedGoals = updatedGoalsList.joinToString("\n- ")
-
-                        // Actualizar en la BD primero y luego actualizar la UI
-                        viewModel.updateUserGoals(user.id, updatedGoals)
-                            // Refrescar la lista en la UI después de la actualización en la BD
-                            goalsList = updatedGoals.split("\n- ").filter { it.isNotBlank() }
-
-                    }) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar meta")
-                    }
-                }
-            }
-        }
-
     }
 }
+
 
 
 
