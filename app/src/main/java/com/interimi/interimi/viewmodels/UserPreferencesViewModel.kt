@@ -1,9 +1,7 @@
-package com.interimi.interimi
+package com.interimi.interimi.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.interimi.interimi.data.PreferencesRepository
-import com.interimi.interimi.data.UserRepository
 import com.interimi.interimi.domain.usecases.UseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

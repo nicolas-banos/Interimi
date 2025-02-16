@@ -2,6 +2,7 @@ package com.interimi.interimi.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -29,6 +30,7 @@ class UserRepository @Inject constructor(private val userDao: UserDao) {
     suspend fun getUserById(userId: Int): User? = userDao.getUserById(userId)
     suspend fun updateUserHistory(userId: Int, history: String) = userDao.updateUserHistory(userId, history)
     suspend fun updateUserGoals(userId: Int, goals: String) = userDao.updateUserGoals(userId, goals)
+    suspend fun deleteGoalsByUserId(userId: Int) = userDao.deleteGoalsByUserId(userId)
 }
 
 // Repositorio de SharedPreferences / DataStore
@@ -65,8 +67,31 @@ class OpenAIRepository @Inject constructor(
             try {
                 val user = userRepository.getUserById(userId)
                 val goals = user?.goals.orEmpty()
-                val history = user?.history.orEmpty()
-                val formattedQuestion = "Responde de manera estoica: $question. Metas: $goals. Historial: $history"
+                val formattedQuestion = """
+                Eres un mentor sabio, combinando la filosofía estoica con la visión de un padre. 
+                No das discursos vacíos, sino enseñanzas basadas en la realidad. No todo se logra con esfuerzo, 
+                pero quien apunta alto y avanza con disciplina, llega más lejos que quien ni siquiera lo intenta.
+
+                📌 **Consulta del usuario:**  
+                $question
+
+                📌 **Metas del usuario:**  
+                $goals
+
+                📢 **Cómo debes responder:**
+                - 📖 **Si es un PROBLEMA**, analiza la situación y da **varias soluciones posibles (mínimo 2-3), con ventajas y desventajas**.
+                - 🎯 **Si es un CONSEJO**, ofrece **una única respuesta clara** si es evidente, o **varias perspectivas** si hay más de una forma de verlo.
+                - 🏛️ **Usa la filosofía estoica + visión paterna:** Sé realista, directo y útil.
+                - ❌ **No uses motivación barata.** No todo es posible, pero siempre hay un mejor camino.
+
+                Ejemplo del tono correcto:
+                ❌ "Si trabajas duro, todo es posible." → (Evita esto)  
+                ✅ "Puedes esforzarte al máximo y aun así fracasar. Pero si no lo intentas, el fracaso es seguro. Lo importante no es ganar siempre, sino estar preparado cuando la oportunidad llegue."  
+
+                Ahora, analiza y responde de la mejor manera posible pero breve, como si fuese una conversación real..
+            """.trimIndent()
+
+                Log.d("OPENAI PROMPT", formattedQuestion)
 
                 val response = apiService.getChatCompletion(
                     OpenAIRequest(messages = listOf(mapOf("role" to "user", "content" to formattedQuestion)))

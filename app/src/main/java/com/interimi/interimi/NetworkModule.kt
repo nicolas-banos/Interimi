@@ -1,6 +1,7 @@
 package com.interimi.interimi.di
 
 import com.interimi.interimi.network.OpenAIApiService
+import com.interimi.interimi.BuildConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +28,7 @@ object NetworkModule {
             })
             .addInterceptor(Interceptor { chain ->
                 val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ")
+                    .addHeader("Authorization", "Bearer ${BuildConfig.OPENAI_API_TOKEN}")
                     .build()
                 chain.proceed(request)
             })

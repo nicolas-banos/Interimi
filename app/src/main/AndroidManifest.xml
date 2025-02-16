@@ -12,13 +12,13 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="Interimi"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Interimi"
         tools:targetApi="31">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".screens.MainActivity"
             android:exported="true"
             android:label="Interimi"
             android:theme="@style/Theme.Interimi"

@@ -16,6 +16,7 @@ class UseCases @Inject constructor(
 ) {
     suspend fun insertUser(user: User): Long = userRepository.insertUser(user)
     suspend fun getUserById(userId: Int): User? = userRepository.getUserById(userId)
+    suspend fun deleteGoalsByUserId(userId: Int)= userRepository.deleteGoalsByUserId(userId)
     suspend fun updateUserGoals(userId: Int, newGoal: String) {
         val user = getUserById(userId)
         val updatedGoals = (user?.goals ?: "").plus("\n- $newGoal")

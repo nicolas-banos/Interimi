@@ -1,8 +1,8 @@
-package com.interimi.interimi
+package com.interimi.interimi.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.interimi.interimi.data.UserRepository
+import com.interimi.interimi.User
 import com.interimi.interimi.domain.usecases.UseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,14 +28,21 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             val id = useCases.insertUser(user)
             onComplete(id)
-            getUserById(user.id) // Recargar datos después de insertar
+            getUserById(user.id)
         }
     }
 
     fun updateUserGoals(userId: Int, newGoal: String) {
         viewModelScope.launch {
             useCases.updateUserGoals(userId, newGoal)
-            getUserById(userId) // Recargar usuario actualizado
+            getUserById(userId)
+        }
+    }
+
+    fun deleteGoalsByUserId(userId: Int){
+        viewModelScope.launch {
+            useCases.deleteGoalsByUserId(userId)
+            getUserById(userId)
         }
     }
 }

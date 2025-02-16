@@ -1,8 +1,7 @@
-package com.interimi.interimi.di
+package com.interimi.interimi.database
 
 import android.content.Context
 import androidx.room.Room
-import com.interimi.interimi.AppDatabase
 import com.interimi.interimi.UserDao
 import dagger.Module
 import dagger.Provides
